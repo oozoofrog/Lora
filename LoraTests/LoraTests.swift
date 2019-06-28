@@ -11,24 +11,38 @@ import XCTest
 
 class LoraTests: XCTestCase {
 
-    override func setUp() {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    let lo = Localization.en
+    let decoder = LocalizableStringDecoder()
+    
+    func testItemFromKeyValueText() {
+        var value = #""hello" = "Hello\#nWorld";"#
+        var decoded = try! decoder.decode(fromKeyTextString: value)
+        XCTAssertEqual(decoded, LocalizableStringItem(locale: lo, key: "hello", text: "Hello\nWorld"))
     }
 
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
+}
 
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
+enum Localization: String, Codable, Hashable {
+    case en = "English"
+    case ko = "Korean"
+}
 
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
-    }
+struct LocalizableStringItem: Codable, Hashable {
+    let locale: Localization
+    let key: String
+    let text: String
+}
 
+final class LocalizableStringDecoder {
+    
+    enum Error: Swift.Error {
+        case unableDecodeKeyTextItem
+    }
+    
+    func decode(fromKeyTextString pair: String) throws -> LocalizableStringItem {
+        let array: [String] = pair.components(separatedBy: "=").map({ $0.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: .init(charactersIn: "\";")) })
+        guard array.count == 2 else { throw Error.unableDecodeKeyTextItem }
+        return .init(locale: .en, key: array[0], text: array[1])
+    }
+    
 }
